@@ -1,0 +1,25 @@
+{
+  "name": "authpilot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "authpilot": "index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@clack/prompts": "^0.11.0",
+    "axios": "^1.12.2",
+    "chalk": "^5.6.2",
+    "figures": "^6.1.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.18.0"
+  }
+}
