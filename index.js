@@ -79,6 +79,13 @@ export async function askForDatabaseUrl() {
   return databaseUrl;
 }
 
+async function writeDatabaseUrlInEnv(databaseUrl) {
+  const code = `DATABASE_URL="${databaseUrl}"`
+
+  const targetPath = path.join(process.cwd(), ".env");
+  await fs.writeFile(targetPath, code);
+}
+
 function buildProvidersCode(selected) {
   const importLines = selected.map(
     (p) => `import ${p} from "next-auth/providers/${p.toLowerCase()}"`
@@ -256,12 +263,21 @@ async function main() {
   }
 
   try {
+    const databaseUrl = await askForDatabaseUrl()
+    await writeDatabaseUrlInEnv(databaseUrl)
+    console.log(chalk.green(`${figures.tick} Updated .env with DATABASE_URL!`));
+  } catch (error) {
+    outro(chalk.red(error.message));
+    process.exit(1);
+  }
+
+  try {
     s.start("Generating prisma client");
     await execAsync("npx prisma migrate dev --name init");
     await execAsync("npx prisma generate");
     s.stop(chalk.green(`${figures.tick} Generated prisma client!`));
   } catch (error) {
-    s.stop(chalk.red(`${figures.cross} Prisma client generation failed.`));
+    s.stop(chalk.red(`${figures.cross} Generation failed.`));
     outro(chalk.red(error.message));
     process.exit(1);
   }
