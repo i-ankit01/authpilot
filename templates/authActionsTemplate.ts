@@ -1,7 +1,7 @@
 'use server'
 
 import { auth } from "@/auth";
-import db from '../../../lib/db'
+import db from "@/lib/db";
 
 export const getUserById = async (id : string) => {
     try {
@@ -11,7 +11,6 @@ export const getUserById = async (id : string) => {
             },
             include : {accounts : true}
         })
-
         return user;
 
     } catch (error) {

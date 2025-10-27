@@ -65,7 +65,7 @@ function buildProvidersCode(selected) {
   );
 
   const providerInstances = selected.map(
-    (p) => `${configureImportName(p)}({
+    (p) => `${(p)}({
       clientId: process.env.${p.toUpperCase()}_CLIENT_ID!,
       clientSecret: process.env.${p.toUpperCase()}_CLIENT_SECRET!,
     })`
@@ -92,17 +92,58 @@ async function generateAuthConfig(srcExists, selectedProviders) {
   await fs.writeFile(targetPath, code);
 }
 
-async function generateAuthActions(srcExists){
+async function generateAuthActions(srcExists) {
   const actionsDir = srcExists
-    ? path.join(process.cwd(), "src" , "actions", "auth")
+    ? path.join(process.cwd(), "src", "actions", "auth")
     : path.join(process.cwd(), "actions", "auth");
 
   await fs.mkdir(actionsDir, { recursive: true });
 
-  const templatePath = path.join(__dirname, "templates", "authActionsTemplate.ts");
+  const templatePath = path.join(
+    __dirname,
+    "templates",
+    "authActionsTemplate.ts"
+  );
   const templateContent = await fs.readFile(templatePath, "utf-8");
   const targetPath = path.join(actionsDir, "index.ts");
-  await fs.writeFile(targetPath, templateContent, "utf-8"); 
+  await fs.writeFile(targetPath, templateContent, "utf-8");
+}
+
+async function generateAuthFile(srcExists) {
+  const authFilePath = srcExists
+    ? path.join(process.cwd(), "src", "auth.ts")
+    : path.join(process.cwd(), "auth.ts");
+
+  const templatePath = path.join(__dirname, "templates", "authTemplate.ts");
+  const templateContent = await fs.readFile(templatePath, "utf-8");
+  await fs.writeFile(authFilePath, templateContent, "utf-8");
+}
+
+async function createAuthRoute(srcExists) {
+  const authRouteDir = srcExists
+    ? path.join(process.cwd(), "src", "api", "auth", "[...nextauth]")
+    : path.join(process.cwd(), "api", "auth", "[...nextauth]");
+
+  await fs.mkdir(authRouteDir, { recursive: true });
+
+  const templatePath = path.join(
+    __dirname,
+    "templates",
+    "authRouteTemplate.ts"
+  );
+  const templateContent = await fs.readFile(templatePath, "utf-8");
+  const targetPath = path.join(authRouteDir, "index.ts");
+  await fs.writeFile(targetPath, templateContent, "utf-8");
+}
+
+async function createMiddlewareFile(srcExists) {
+  const middelwarePath = srcExists
+    ? path.join(process.cwd(), "src", "middleware.ts")
+    : path.join(process.cwd(), "middleware.ts");
+
+  const templatePath = path.join(__dirname, "templates", "middlewareTemplate.ts");
+  const templateContent = await fs.readFile(templatePath, "utf-8");
+  await fs.writeFile(middelwarePath, templateContent, "utf-8");
 }
 
 async function main() {
@@ -120,50 +161,50 @@ async function main() {
 
   const s = spinner();
 
-  try {
-    s.start("Initialzing Prisma...");
-    await execAsync("npm install prisma --save-dev");
-    await execAsync("npm install @prisma/client");
-    await execAsync("npx prisma init");
+  // try {
+  //   s.start("Initialzing Prisma...");
+  //   await execAsync("npm install prisma --save-dev");
+  //   await execAsync("npm install @prisma/client");
+  //   await execAsync("npx prisma init");
 
-    await createPrismaInstance(srcExists);
+  //   await createPrismaInstance(srcExists);
 
-    s.stop(chalk.green(`${figures.tick} Prisma initialized successfully!`));
-  } catch (err) {
-    s.stop(chalk.red(`${figures.cross} Installation failed.`));
-    outro(chalk.red(err.message));
-  }
+  //   s.stop(chalk.green(`${figures.tick} Prisma initialized successfully!`));
+  // } catch (err) {
+  //   s.stop(chalk.red(`${figures.cross} Installation failed.`));
+  //   outro(chalk.red(err.message));
+  // }
 
-  const confirmOverwrite = await confirm({
-    message: "Do you want to overwrite your schema.prisma file?",
-    initialValue: true,
-  });
+  // const confirmOverwrite = await confirm({
+  //   message: "Do you want to overwrite your schema.prisma file?",
+  //   initialValue: true,
+  // });
 
-  cancelFunction(confirmOverwrite);
+  // cancelFunction(confirmOverwrite);
 
-  try {
-    s.start("Updating schema.prisma");
-    await overrideSchema(dbType);
-    s.stop(chalk.green(`${figures.tick} Updated schema.prisma!`));
-  } catch (error) {
-    s.stop(chalk.red(`${figures.cross} Update failed.`));
-    outro(chalk.red(err.message));
-    process.exit(1);
-  }
+  // try {
+  //   s.start("Updating schema.prisma");
+  //   await overrideSchema(dbType);
+  //   s.stop(chalk.green(`${figures.tick} Updated schema.prisma!`));
+  // } catch (error) {
+  //   s.stop(chalk.red(`${figures.cross} Update failed.`));
+  //   outro(chalk.red(err.message));
+  //   process.exit(1);
+  // }
 
-  try {
-    s.start("Installing Next-Auth v5(beta) & Prisma Adapter");
-    await execAsync("npm install next-auth@beta @auth/prisma-adapter");
-    s.stop(
-      chalk.green(
-        `${figures.tick} Installed Next-Auth v5(beta) & Prisma Adapter`
-      )
-    );
-  } catch (error) {
-    s.stop(chalk.red(`${figures.cross} Installation failed.`));
-    outro(chalk.red(err.message));
-    process.exit(1);
-  }
+  // try {
+  //   s.start("Installing Next-Auth v5(beta) & Prisma Adapter");
+  //   await execAsync("npm install next-auth@beta @auth/prisma-adapter");
+  //   s.stop(
+  //     chalk.green(
+  //       `${figures.tick} Installed Next-Auth v5(beta) & Prisma Adapter`
+  //     )
+  //   );
+  // } catch (error) {
+  //   s.stop(chalk.red(`${figures.cross} Installation failed.`));
+  //   outro(chalk.red(err.message));
+  //   process.exit(1);
+  // }
 
   const providers = await multiselect({
     message: "Select the authentication providers you want to use:",
@@ -182,10 +223,44 @@ async function main() {
   });
 
   try {
-    s.start("Creating auth.config.ts");
+    s.start("Creating auth.config.ts & actions/auth file!");
     await generateAuthConfig(srcExists, providers);
-    await generateAuthActions(srcExists)
-    s.stop(chalk.green(`${figures.tick} Created auth.config.ts file!`));
+    await generateAuthActions(srcExists);
+    s.stop(
+      chalk.green(
+        `${figures.tick} Created auth.config.ts & actions/auth file!`
+      )
+    );
+  } catch (error) {
+    s.stop(chalk.red(`${figures.cross} Creation failed.`));
+    outro(chalk.red(error.message));
+    process.exit(1);
+  }
+
+
+  try {
+    s.start("Creating auth.ts & api/auth/[...nextauth]/routes.ts file!");
+    await generateAuthFile(srcExists)
+    await createAuthRoute(srcExists)
+    s.stop(
+      chalk.green(
+        `${figures.tick} Created auth.ts & api/auth/[...nextauth]/routes.ts file!`
+      )
+    );
+  } catch (error) {
+    s.stop(chalk.red(`${figures.cross} Creation failed.`));
+    outro(chalk.red(err.message));
+    process.exit(1);
+  }
+
+  try {
+    s.start("Creating middleware.ts file!");
+    await createMiddlewareFile(srcExists)
+    s.stop(
+      chalk.green(
+        `${figures.tick} Created middleware.ts file!`
+      )
+    );
   } catch (error) {
     s.stop(chalk.red(`${figures.cross} Creation failed.`));
     outro(chalk.red(err.message));
@@ -193,6 +268,7 @@ async function main() {
   }
 
   outro(chalk.green(`${figures.info} Your Project Setup is ready`));
+
 }
 
 main();
