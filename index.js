@@ -37,10 +37,8 @@ async function hasSrcDirectory() {
 
 const srcExists = await hasSrcDirectory();
 
-async function overrideSchema(srcExists, dbType) {
-  const schemaPath = srcExists
-    ? path.join(process.cwd(), "src", "prisma", "schema.prisma")
-    : path.join(process.cwd(), "prisma", "schema.prisma");
+async function overrideSchema(dbType) {
+  const schemaPath = path.join(process.cwd(), "prisma", "schema.prisma");
 
   const templatePath = path.join(__dirname, "templates", `${dbType}.prisma`);
 
@@ -48,14 +46,22 @@ async function overrideSchema(srcExists, dbType) {
   await fs.writeFile(schemaPath, templateContent);
 }
 
+async function createPrismaInstance(srcExists) {
+  const libPath = srcExists
+    ? path.join(process.cwd(), "src", "lib")
+    : path.join(process.cwd(), "lib");
 
+  await fs.mkdir(libPath, { recursive: true });
 
-function configureImportName(str) {
-  return str+"Provider";
+  const templatePath = path.join(__dirname, "templates", "dbTemplate.ts");
+  const templateContent = await fs.readFile(templatePath, "utf-8");
+  const targetPath = path.join(libPath, "db.ts");
+  await fs.writeFile(targetPath, templateContent, "utf-8");
 }
+
 function buildProvidersCode(selected) {
   const importLines = selected.map(
-    (p) => `import ${configureImportName(p)} from "next-auth/providers/${p.toLowerCase()}"`
+    (p) => `import ${p} from "next-auth/providers/${p.toLowerCase()}"`
   );
 
   const providerInstances = selected.map(
@@ -77,14 +83,27 @@ export default {
 `;
 }
 
-
-async function generateAuthConfig(selectedProviders) {
+async function generateAuthConfig(srcExists, selectedProviders) {
   const code = buildProvidersCode(selectedProviders);
 
-  const targetPath = path.join(process.cwd(), "auth.config.ts");
+  const targetPath = srcExists
+    ? path.join(process.cwd(), "src", "auth.config.ts")
+    : path.join(process.cwd(), "auth.config.ts");
   await fs.writeFile(targetPath, code);
 }
 
+async function generateAuthActions(srcExists){
+  const actionsDir = srcExists
+    ? path.join(process.cwd(), "src" , "actions", "auth")
+    : path.join(process.cwd(), "actions", "auth");
+
+  await fs.mkdir(actionsDir, { recursive: true });
+
+  const templatePath = path.join(__dirname, "templates", "authActionsTemplate.ts");
+  const templateContent = await fs.readFile(templatePath, "utf-8");
+  const targetPath = path.join(actionsDir, "index.ts");
+  await fs.writeFile(targetPath, templateContent, "utf-8"); 
+}
 
 async function main() {
   intro(chalk.cyan(`${figures.play} AuthPilot CLI`));
@@ -106,6 +125,9 @@ async function main() {
     await execAsync("npm install prisma --save-dev");
     await execAsync("npm install @prisma/client");
     await execAsync("npx prisma init");
+
+    await createPrismaInstance(srcExists);
+
     s.stop(chalk.green(`${figures.tick} Prisma initialized successfully!`));
   } catch (err) {
     s.stop(chalk.red(`${figures.cross} Installation failed.`));
@@ -121,7 +143,7 @@ async function main() {
 
   try {
     s.start("Updating schema.prisma");
-    await overrideSchema(srcExists, dbType);
+    await overrideSchema(dbType);
     s.stop(chalk.green(`${figures.tick} Updated schema.prisma!`));
   } catch (error) {
     s.stop(chalk.red(`${figures.cross} Update failed.`));
@@ -129,10 +151,24 @@ async function main() {
     process.exit(1);
   }
 
+  try {
+    s.start("Installing Next-Auth v5(beta) & Prisma Adapter");
+    await execAsync("npm install next-auth@beta @auth/prisma-adapter");
+    s.stop(
+      chalk.green(
+        `${figures.tick} Installed Next-Auth v5(beta) & Prisma Adapter`
+      )
+    );
+  } catch (error) {
+    s.stop(chalk.red(`${figures.cross} Installation failed.`));
+    outro(chalk.red(err.message));
+    process.exit(1);
+  }
+
   const providers = await multiselect({
     message: "Select the authentication providers you want to use:",
     options: [
-      { value: "Credentials", label: "Credentials" },
+      // { value: "Credentials", label: "Credentials" },
       { value: "Google", label: "Google", hint: "recommended" },
       { value: "GitHub", label: "GitHub" },
       { value: "Facebook", label: "FaceBook" },
@@ -147,7 +183,8 @@ async function main() {
 
   try {
     s.start("Creating auth.config.ts");
-    await generateAuthConfig(providers)
+    await generateAuthConfig(srcExists, providers);
+    await generateAuthActions(srcExists)
     s.stop(chalk.green(`${figures.tick} Created auth.config.ts file!`));
   } catch (error) {
     s.stop(chalk.red(`${figures.cross} Creation failed.`));
