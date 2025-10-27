@@ -59,6 +59,26 @@ async function createPrismaInstance(srcExists) {
   await fs.writeFile(targetPath, templateContent, "utf-8");
 }
 
+export async function askForDatabaseUrl() {
+  const databaseUrl = await p.text({
+    message: "Enter your DATABASE_URL:",
+    placeholder: "e.g. postgresql://user:password@localhost:5432/mydb",
+    validate(value) {
+      if (!value) return "DATABASE_URL cannot be empty";
+      if (!/^postgresql|mysql|mongodb|sqlite/.test(value)) {
+        return "It should start with postgresql://, mysql://, etc.";
+      }
+    },
+  });
+
+  if (p.isCancel(databaseUrl)) {
+    p.cancel("Setup cancelled.");
+    process.exit(0);
+  }
+
+  return databaseUrl;
+}
+
 function buildProvidersCode(selected) {
   const importLines = selected.map(
     (p) => `import ${p} from "next-auth/providers/${p.toLowerCase()}"`
@@ -231,6 +251,17 @@ async function main() {
     s.stop(chalk.green(`${figures.tick} Updated schema.prisma!`));
   } catch (error) {
     s.stop(chalk.red(`${figures.cross} Update failed.`));
+    outro(chalk.red(error.message));
+    process.exit(1);
+  }
+
+  try {
+    s.start("Generating prisma client");
+    await execAsync("npx prisma migrate dev --name init");
+    await execAsync("npx prisma generate");
+    s.stop(chalk.green(`${figures.tick} Generated prisma client!`));
+  } catch (error) {
+    s.stop(chalk.red(`${figures.cross} Prisma client generation failed.`));
     outro(chalk.red(error.message));
     process.exit(1);
   }
