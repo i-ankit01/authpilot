@@ -6,8 +6,8 @@ const { auth } = NextAuth(authConfig);
 
 const apiAuthPrefix = "/api/auth";
 const DEFAULT_LOGIN_REDIRECT = "/";
-const authRoutes = ["/signin", "/signup"];
-const publicRoutes = ["/", "/signin", "/signup", "/api/public"];
+const authRoutes = ["/auth/signin"];
+const publicRoutes = ["/signin", "/signup", "/api/public"];
 
 export default auth((req:any) => {
   const { nextUrl } = req;
@@ -28,7 +28,7 @@ export default auth((req:any) => {
 
   // Redirect unauthenticated users away from protected routes
   if (!isLoggedIn && !isPublicRoute) {
-    return Response.redirect(new URL("/signin", nextUrl));
+    return Response.redirect(new URL("api/auth/signin", nextUrl));
   }
 
   return null;
