@@ -6,6 +6,9 @@ import {
   outro,
   select,
   multiselect,
+  text,
+  isCancel,
+  cancel,
 } from "@clack/prompts";
 import { exec } from "child_process";
 import { promises as fs } from "fs";
@@ -59,8 +62,8 @@ async function createPrismaInstance(srcExists) {
   await fs.writeFile(targetPath, templateContent, "utf-8");
 }
 
-export async function askForDatabaseUrl() {
-  const databaseUrl = await p.text({
+async function askForDatabaseUrl() {
+  const databaseUrl = await text({
     message: "Enter your DATABASE_URL:",
     placeholder: "e.g. postgresql://user:password@localhost:5432/mydb",
     validate(value) {
@@ -71,8 +74,8 @@ export async function askForDatabaseUrl() {
     },
   });
 
-  if (p.isCancel(databaseUrl)) {
-    p.cancel("Setup cancelled.");
+  if (isCancel(databaseUrl)) {
+    cancel("Setup cancelled.");
     process.exit(0);
   }
 
@@ -80,10 +83,19 @@ export async function askForDatabaseUrl() {
 }
 
 async function writeDatabaseUrlInEnv(databaseUrl) {
-  const code = `DATABASE_URL="${databaseUrl}"`
+  const code = `DATABASE_URL="${databaseUrl}"`;
 
   const targetPath = path.join(process.cwd(), ".env");
   await fs.writeFile(targetPath, code);
+}
+
+async function updatePrismaConfigFile() {
+  const configPath = path.join(process.cwd(), "prisma.config.ts");
+
+  const templatePath = path.join(__dirname, "templates", "prismaConfigTemplate.ts");
+
+  const templateContent = await fs.readFile(templatePath, "utf-8");
+  await fs.writeFile(configPath, templateContent);
 }
 
 function buildProvidersCode(selected) {
@@ -230,46 +242,46 @@ async function main() {
   cancelFunction(dbType);
 
   const s = spinner();
+  // try {
+  //   s.start("Initialzing Prisma...");
+  //   await execAsync("npm install prisma --save-dev");
+  //   await execAsync("npm install @prisma/client");
+  //   await execAsync("npx prisma init");
 
-  try {
-    s.start("Initialzing Prisma...");
-    await execAsync("npm install prisma --save-dev");
-    await execAsync("npm install @prisma/client");
-    await execAsync("npx prisma init");
+  //   await createPrismaInstance(srcExists);
 
-    await createPrismaInstance(srcExists);
+  //   s.stop(chalk.green(`${figures.tick} Prisma initialized successfully!`));
+  // } catch (error) {
+  //   s.stop(chalk.red(`${figures.cross} Installation failed.`));
+  //   outro(chalk.red(error.message));
+  // }
 
-    s.stop(chalk.green(`${figures.tick} Prisma initialized successfully!`));
-  } catch (error) {
-    s.stop(chalk.red(`${figures.cross} Installation failed.`));
-    outro(chalk.red(error.message));
-  }
+  // const confirmOverwrite = await confirm({
+  //   message: "Do you want to overwrite your schema.prisma file?",
+  //   initialValue: true,
+  // });
 
-  const confirmOverwrite = await confirm({
-    message: "Do you want to overwrite your schema.prisma file?",
-    initialValue: true,
-  });
+  // cancelFunction(confirmOverwrite);
 
-  cancelFunction(confirmOverwrite);
+  // try {
+  //   s.start("Updating schema.prisma");
+  //   await overrideSchema(dbType);
+  //   s.stop(chalk.green(`${figures.tick} Updated schema.prisma!`));
+  // } catch (error) {
+  //   s.stop(chalk.red(`${figures.cross} Update failed.`));
+  //   outro(chalk.red(error.message));
+  //   process.exit(1);
+  // }
 
-  try {
-    s.start("Updating schema.prisma");
-    await overrideSchema(dbType);
-    s.stop(chalk.green(`${figures.tick} Updated schema.prisma!`));
-  } catch (error) {
-    s.stop(chalk.red(`${figures.cross} Update failed.`));
-    outro(chalk.red(error.message));
-    process.exit(1);
-  }
-
-  try {
-    const databaseUrl = await askForDatabaseUrl()
-    await writeDatabaseUrlInEnv(databaseUrl)
-    console.log(chalk.green(`${figures.tick} Updated .env with DATABASE_URL!`));
-  } catch (error) {
-    outro(chalk.red(error.message));
-    process.exit(1);
-  }
+  // try {
+  //   const databaseUrl = await askForDatabaseUrl();
+  //   await writeDatabaseUrlInEnv(databaseUrl);
+  //   await updatePrismaConfigFile()
+  //   console.log(chalk.green(`${figures.tick} Updated .env with DATABASE_URL!`));
+  // } catch (error) {
+  //   outro(chalk.red(error.message));
+  //   process.exit(1);
+  // }
 
   try {
     s.start("Generating prisma client");

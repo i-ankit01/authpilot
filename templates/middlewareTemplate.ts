@@ -28,7 +28,7 @@ export default auth((req:any) => {
 
   // Redirect unauthenticated users away from protected routes
   if (!isLoggedIn && !isPublicRoute) {
-    return Response.redirect(new URL("api/auth/signin", nextUrl));
+    return Response.redirect(new URL("/api/auth/signin", nextUrl));
   }
 
   return null;
