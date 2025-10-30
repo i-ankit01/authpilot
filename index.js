@@ -92,10 +92,32 @@ async function writeDatabaseUrlInEnv(databaseUrl) {
 async function updatePrismaConfigFile() {
   const configPath = path.join(process.cwd(), "prisma.config.ts");
 
-  const templatePath = path.join(__dirname, "templates", "prismaConfigTemplate.ts");
+  const templatePath = path.join(
+    __dirname,
+    "templates",
+    "prismaConfigTemplate.ts"
+  );
 
   const templateContent = await fs.readFile(templatePath, "utf-8");
   await fs.writeFile(configPath, templateContent);
+}
+
+export async function resetDb() {
+  const shouldContinue = await confirm({
+    message:
+      colors.red(
+        "Database migration failed. Do you want to RESET the database?"
+      ) +
+      "\n" +
+      colors.yellow("(This will permanently delete data)"),
+  });
+
+  if (isCancel(shouldContinue) || !shouldContinue) {
+    cancel("Database reset aborted.");
+    return false;
+  }
+
+  return true;
 }
 
 function buildProvidersCode(selected) {
@@ -242,56 +264,89 @@ async function main() {
   cancelFunction(dbType);
 
   const s = spinner();
-  // try {
-  //   s.start("Initialzing Prisma...");
-  //   await execAsync("npm install prisma --save-dev");
-  //   await execAsync("npm install @prisma/client");
-  //   await execAsync("npx prisma init");
+  try {
+    s.start("Initialzing Prisma...");
+    await execAsync("npm install prisma --save-dev");
+    await execAsync("npm install @prisma/client");
+    await execAsync("npx prisma init");
 
-  //   await createPrismaInstance(srcExists);
+    await createPrismaInstance(srcExists);
 
-  //   s.stop(chalk.green(`${figures.tick} Prisma initialized successfully!`));
-  // } catch (error) {
-  //   s.stop(chalk.red(`${figures.cross} Installation failed.`));
-  //   outro(chalk.red(error.message));
-  // }
+    s.stop(chalk.green(`${figures.tick} Prisma initialized successfully!`));
+  } catch (error) {
+    s.stop(chalk.red(`${figures.cross} Installation failed.`));
+    outro(chalk.red(error.message));
+  }
 
-  // const confirmOverwrite = await confirm({
-  //   message: "Do you want to overwrite your schema.prisma file?",
-  //   initialValue: true,
-  // });
+  const confirmOverwrite = await confirm({
+    message: "Do you want to overwrite your schema.prisma file?",
+    initialValue: true,
+  });
 
-  // cancelFunction(confirmOverwrite);
-
-  // try {
-  //   s.start("Updating schema.prisma");
-  //   await overrideSchema(dbType);
-  //   s.stop(chalk.green(`${figures.tick} Updated schema.prisma!`));
-  // } catch (error) {
-  //   s.stop(chalk.red(`${figures.cross} Update failed.`));
-  //   outro(chalk.red(error.message));
-  //   process.exit(1);
-  // }
-
-  // try {
-  //   const databaseUrl = await askForDatabaseUrl();
-  //   await writeDatabaseUrlInEnv(databaseUrl);
-  //   await updatePrismaConfigFile()
-  //   console.log(chalk.green(`${figures.tick} Updated .env with DATABASE_URL!`));
-  // } catch (error) {
-  //   outro(chalk.red(error.message));
-  //   process.exit(1);
-  // }
+  cancelFunction(confirmOverwrite);
 
   try {
-    s.start("Generating prisma client");
-    await execAsync("npx prisma migrate dev --name init");
-    await execAsync("npx prisma generate");
-    s.stop(chalk.green(`${figures.tick} Generated prisma client!`));
+    s.start("Updating schema.prisma");
+    await overrideSchema(dbType);
+    s.stop(chalk.green(`${figures.tick} Updated schema.prisma!`));
   } catch (error) {
-    s.stop(chalk.red(`${figures.cross} Generation failed.`));
+    s.stop(chalk.red(`${figures.cross} Update failed.`));
     outro(chalk.red(error.message));
     process.exit(1);
+  }
+
+  try {
+    const databaseUrl = await askForDatabaseUrl();
+    await writeDatabaseUrlInEnv(databaseUrl);
+    await updatePrismaConfigFile();
+    console.log(chalk.green(`${figures.tick} Updated .env with DATABASE_URL!`));
+  } catch (error) {
+    outro(chalk.red(error.message));
+    process.exit(1);
+  }
+
+  if (dbType == "postgresql") {
+    try {
+      s.start("Generating prisma client");
+      await execAsync("npx prisma migrate dev --name init");
+      await execAsync("npx prisma generate");
+      s.stop(chalk.green(`${figures.tick} Generated prisma client!`));
+    } catch (error) {
+      s.stop(chalk.red(`${figures.cross} Generation failed.`));
+
+      const wantReset = await resetDb();
+      if (wantReset) {
+        s.start("Resetting database");
+        await execAsync("npx prisma migrate reset --force");
+        await execAsync("npx prisma migrate dev --name init");
+        await execAsync("npx prisma generate");
+        s.stop(chalk.green(`${figures.tick} Generated prisma client!`));
+      } else {
+        outro(chalk.red(error.message));
+        process.exit(1);
+      }
+    }
+  } else {
+    try {
+      s.start("Generating prisma client");
+      await execAsync("npx prisma db push");
+      await execAsync("npx prisma generate");
+      s.stop(chalk.green(`${figures.tick} Generated prisma client!`));
+    } catch (error) {
+      s.stop(chalk.red(`${figures.cross} Generation failed.`));
+
+      const wantReset = await resetDb();
+      if (wantReset) {
+        s.start("Resetting database");
+        await prisma.$runCommandRaw({ dropDatabase: 1 });
+        await execAsync("npx prisma db push");
+        await execAsync("npx prisma generate");
+        s.stop(chalk.green(`${figures.tick} Generated prisma client!`));
+      } else {
+        outro(chalk.red(error.message));
+        process.exit(1);
+      }
+    }
   }
 
   try {
