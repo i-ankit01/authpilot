@@ -105,11 +105,11 @@ async function updatePrismaConfigFile() {
 export async function resetDb() {
   const shouldContinue = await confirm({
     message:
-      colors.red(
+      chalk.red(
         "Database migration failed. Do you want to RESET the database?"
       ) +
       "\n" +
-      colors.yellow("(This will permanently delete data)"),
+      chalk.yellow("(This will permanently delete data)"),
   });
 
   if (isCancel(shouldContinue) || !shouldContinue) {
@@ -235,6 +235,19 @@ async function updateEnvFile(selectedProviders) {
   await fs.writeFile(targetPath, code);
 }
 
+async function createUserHook(srcExists) {
+  const hookPath = srcExists
+    ? path.join(process.cwd(), "src", "hooks")
+    : path.join(process.cwd(), "hooks");
+
+  await fs.mkdir(hookPath, { recursive: true });
+
+  const templatePath = path.join(__dirname, "templates", "useCurrentUserHookTemplate.ts");
+  const templateContent = await fs.readFile(templatePath, "utf-8");
+  const targetPath = path.join(hookPath, "use-current-user.ts");
+  await fs.writeFile(targetPath, templateContent, "utf-8");
+}
+
 async function updateRootLayout(srcExists) {
   const layoutFilePath = srcExists
     ? path.join(process.cwd(), "src", "app", "layout.tsx")
@@ -248,6 +261,38 @@ async function updateRootLayout(srcExists) {
 
   const templateContent = await fs.readFile(templatePath, "utf-8");
   await fs.writeFile(layoutFilePath, templateContent);
+}
+
+async function updateRootPage(srcExists) {
+  const rootPagePath = srcExists
+    ? path.join(process.cwd(), "src", "app", "page.tsx")
+    : path.join(process.cwd(), "app", "page.tsx");
+
+  const templatePath = path.join(
+    __dirname,
+    "templates",
+    "landingPageTemplate.tsx"
+  );
+
+  const templateContent = await fs.readFile(templatePath, "utf-8");
+  await fs.writeFile(rootPagePath, templateContent);
+}
+
+async function createDashboardPage(srcExists) {
+  const dashboardDir = srcExists
+    ? path.join(process.cwd(), "src", "app", "dashboard")
+    : path.join(process.cwd(), "app", "dashboard");
+
+  await fs.mkdir(dashboardDir, { recursive: true });
+
+  const templatePath = path.join(
+    __dirname,
+    "templates",
+    "dashboardTemplate.tsx"
+  );
+  const templateContent = await fs.readFile(templatePath, "utf-8");
+  const targetPath = path.join(dashboardDir, "page.tsx");
+  await fs.writeFile(targetPath, templateContent, "utf-8");
 }
 
 async function main() {
@@ -352,6 +397,7 @@ async function main() {
   try {
     s.start("Installing Next-Auth v5(beta) & Prisma Adapter");
     await execAsync("npm install next-auth@beta @auth/prisma-adapter");
+    await execAsync("npm install lucide-react");
     s.stop(
       chalk.green(
         `${figures.tick} Installed Next-Auth v5(beta) & Prisma Adapter`
@@ -423,6 +469,20 @@ async function main() {
     await updateRootLayout(srcExists);
     s.stop(
       chalk.green(`${figures.tick} Updated layout.tsx with SessionProvider !`)
+    );
+  } catch (error) {
+    s.stop(chalk.red(`${figures.cross} Update failed.`));
+    outro(chalk.red(error.message));
+    process.exit(1);
+  }
+
+  try {
+    s.start("Creating Dashboard & Current User Hook!");
+    await createUserHook(srcExists)
+    await updateRootPage(srcExists)
+    await createDashboardPage(srcExists)
+    s.stop(
+      chalk.green(`${figures.tick} Created Dashboard & Current User Hook !`)
     );
   } catch (error) {
     s.stop(chalk.red(`${figures.cross} Update failed.`));
