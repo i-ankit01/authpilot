@@ -211,9 +211,9 @@ async function createMiddlewareFile(srcExists) {
   await fs.writeFile(middelwarePath, templateContent, "utf-8");
 }
 
-function buildEnvCode(selectedProviders) {
+function buildEnvCode(selectedProviders , databaseUrl) {
   const header = [
-    `DATABASE_URL=""`,
+    `DATABASE_URL="${databaseUrl}"`,
     `NEXTAUTH_URL=http://localhost:3000`,
     `NEXTAUTH_SECRET=secret_token`,
     "",
@@ -228,8 +228,8 @@ function buildEnvCode(selectedProviders) {
   return [...header, ...providerLines].join("\n");
 }
 
-async function updateEnvFile(selectedProviders) {
-  const code = buildEnvCode(selectedProviders);
+async function updateEnvFile(selectedProviders , databaseUrl) {
+  const code = buildEnvCode(selectedProviders , databaseUrl);
 
   const targetPath = path.join(process.cwd(), ".env");
   await fs.writeFile(targetPath, code);
@@ -306,6 +306,23 @@ async function main() {
     ],
   });
 
+  const providers = await multiselect({
+    message:
+      "Select the authentication providers you want to use: (Use space key to select)",
+    options: [
+      // { value: "Credentials", label: "Credentials" },
+      { value: "Google", label: "Google", hint: "recommended" },
+      { value: "GitHub", label: "GitHub" },
+      { value: "Facebook", label: "FaceBook" },
+      { value: "Discord", label: "Discord" },
+      { value: "LinkedIn", label: "LinkedIn" },
+      { value: "Reddit", label: "Reddit" },
+      { value: "Twitter", label: "Twitter" },
+      { value: "Twitch", label: "Twitch" },
+    ],
+    required: false,
+  });
+
   cancelFunction(dbType);
 
   const s = spinner();
@@ -343,6 +360,7 @@ async function main() {
   try {
     const databaseUrl = await askForDatabaseUrl();
     await writeDatabaseUrlInEnv(databaseUrl);
+    await updateEnvFile(providers , databaseUrl);
     await updatePrismaConfigFile();
     console.log(chalk.green(`${figures.tick} Updated .env with DATABASE_URL!`));
   } catch (error) {
@@ -409,22 +427,6 @@ async function main() {
     process.exit(1);
   }
 
-  const providers = await multiselect({
-    message:
-      "Select the authentication providers you want to use: (Use space key to select)",
-    options: [
-      // { value: "Credentials", label: "Credentials" },
-      { value: "Google", label: "Google", hint: "recommended" },
-      { value: "GitHub", label: "GitHub" },
-      { value: "Facebook", label: "FaceBook" },
-      { value: "Discord", label: "Discord" },
-      { value: "LinkedIn", label: "LinkedIn" },
-      { value: "Reddit", label: "Reddit" },
-      { value: "Twitter", label: "Twitter" },
-      { value: "Twitch", label: "Twitch" },
-    ],
-    required: false,
-  });
 
   try {
     s.start("Creating auth.config.ts & actions/auth file!");
@@ -491,11 +493,9 @@ async function main() {
   }
 
   try {
-    await updateEnvFile(providers);
     outro(
       [
-        chalk.yellow("Update your .env variables and run the dev server"),
-        chalk.green(`${figures.info} Your Project Setup is ready`),
+        chalk.yellow("Update your .env variables and run the dev server")
       ].join("\n")
     );
   } catch (error) {

@@ -7,7 +7,7 @@ const { auth } = NextAuth(authConfig);
 const apiAuthPrefix = "/api/auth";
 const DEFAULT_LOGIN_REDIRECT = "/";
 const authRoutes = ["/auth/signin"];
-const publicRoutes = ["/signin", "/signup", "/api/public"];
+const publicRoutes = ["/signin", "/signup", "/api/public", "/"];
 
 export default auth((req:any) => {
   const { nextUrl } = req;

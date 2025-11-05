@@ -1,14 +1,21 @@
+import { auth } from "@/auth";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function Home() {
-  const user = useCurrentUser();
+export default async function Home() {
+  const session = await auth();
+  const user = session?.user;
   return (
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <header className="flex justify-between items-center w-full md:p-5">
         <h1 className="font-mono font-semibold text-lg">Authpilot</h1>
         {user ? (
-          <button className="font-mono text-white">Signed In</button>
+          <Link
+            href="/dashboard"
+            className="rounded-full font-mono border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-6 sm:h-8 px-4 sm:px-5 sm:w-auto"
+          >
+            Get Dashboard
+          </Link>
         ) : (
           <Link
             href="/api/auth/signin?callbackUrl=/dashboard"
