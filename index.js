@@ -21,8 +21,12 @@ import path from "path";
 const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const args = process.argv.slice(2);
+const command = args[0];
 
-function cancelFunction(value) {
+if (command === 'init') {
+  
+  function cancelFunction(value) {
   if (!value) {
     outro(chalk.yellow(`${figures.warning} Installation cancelled.`));
     process.exit(0);
@@ -102,7 +106,7 @@ async function updatePrismaConfigFile() {
   await fs.writeFile(configPath, templateContent);
 }
 
-export async function resetDb() {
+async function resetDb() {
   const shouldContinue = await confirm({
     message:
       chalk.red(
@@ -199,8 +203,8 @@ async function createAuthRoute(srcExists) {
 
 async function createMiddlewareFile(srcExists) {
   const middelwarePath = srcExists
-    ? path.join(process.cwd(), "src", "middleware.ts")
-    : path.join(process.cwd(), "middleware.ts");
+    ? path.join(process.cwd(), "src", "proxy.ts")
+    : path.join(process.cwd(), "proxy.ts");
 
   const templatePath = path.join(
     __dirname,
@@ -507,3 +511,9 @@ async function main() {
 }
 
 main();
+
+} else {
+  outro(chalk.red(`${figures.info} Incorrect command try npx authpilot init`));
+  process.exit(1)
+}
+
