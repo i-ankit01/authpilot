@@ -9,7 +9,7 @@ generator client {
 }
 
 datasource db {
-    provider = "postgresql"
+    provider = "mongodb"
     url      = env("DATABASE_URL")
 }
 
@@ -27,17 +27,17 @@ model User {
 
 model Account {
     id                String @id @default(auto()) @map("_id") @db.ObjectId
-    userId            String @map("user_id")
+    userId            String @map("user_id") @db.ObjectId
     type              String
     provider          String
     providerAccountId String @map("provider_account_id")
 
-    refreshToken String? @map("refresh_token") @db.Text
-    accessToken  String? @map("access_token") @db.Text
+    refreshToken String? @map("refresh_token")
+    accessToken  String? @map("access_token") 
     expiresAt    Int?    @map("expires_at")
     tokenType    String? @map("token_type")
     scope        String?
-    idToken      String? @map("id_token") @db.Text
+    idToken      String? @map("id_token")
     sessionState String? @map("session_state")
 
     createdAt DateTime @default(now())
@@ -52,7 +52,7 @@ model Account {
 model Session {
     id           String   @id @default(auto()) @map("_id") @db.ObjectId
     sessionToken String   @unique @map("session_token")
-    userId       String   @map("user_id")
+    userId       String   @map("user_id") @db.ObjectId
     expires      DateTime
     user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
