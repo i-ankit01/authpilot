@@ -40,12 +40,13 @@ AuthPilot automatically installs and configures the following core dependencies 
 
 ### Step-by-Step Guide
 
-**In the root of you Next.js project execute this**
+◆ **In the root of you Next.js project execute this**
 ```bash
 npx authpilot init
 ```
 
-**Pick Your Database :**
+◆ **Pick Your Database :**
+
 AuthPilot will ask you to select the database you want to use:
 ```bash
 ◆  Pick Your Database
@@ -54,7 +55,8 @@ AuthPilot will ask you to select the database you want to use:
 ```
 
 
-**Select Authentication Providers**
+◆ **Select Authentication Providers**
+
 You’ll be prompted to select which authentication providers you’d like to enable:
 ```bash
 ◆  Select the authentication providers you want to use:
@@ -70,7 +72,8 @@ You’ll be prompted to select which authentication providers you’d like to en
 Use the spacebar to toggle selections.
 
 
-**Prisma Initialization**
+◆ **Prisma Initialization**
+
 Once you’ve chosen your providers, AuthPilot automatically initializes Prisma for you:
 ```bash
 ✔ Prisma initialized successfully!
@@ -83,7 +86,8 @@ If prompted to overwrite your existing schema.prisma, you can choose Yes to allo
 ```
 
 
-**Configure Your Database URL**
+◆ **Configure Your Database URL**
+
 Next, provide your DATABASE_URL — typically found in your database provider’s dashboard (like Monogdb, Neon, Supabase, or Railway):
 ```bash
 ◇  Enter your DATABASE_URL:
@@ -93,7 +97,8 @@ Next, provide your DATABASE_URL — typically found in your database provider’
 AuthPilot will automatically update your .env file with the connection string.
 
 
-**Prisma Generation & Migration**
+◆ **Prisma Generation & Migration**
+
 AuthPilot handles Prisma generation and migration for you.
 
 If the generation fails, AuthPilot will offer to reset your database (warning: this will delete existing data):
@@ -104,13 +109,15 @@ If the generation fails, AuthPilot will offer to reset your database (warning: t
 
 ```
 
-**Installing Dependencies**
+◆ **Installing Dependencies**
+
 AuthPilot installs the latest versions of NextAuth v5 (beta) and Prisma Adapter:
 ```bash
 ✔ Installed Next-Auth v5(beta) & Prisma Adapter
 ```
 
-**File Generation**
+◆ **File Generation**
+
 AuthPilot scaffolds all required authentication files automatically:
 ```bash
 ✔ Created auth.config.ts & actions/auth file!
@@ -120,9 +127,9 @@ AuthPilot scaffolds all required authentication files automatically:
 ✔ Created Dashboard & Current User Hook!
 ```
 
-**Your project is now fully configured for authentication.**
+◆ **Your project is now fully configured for authentication.**
 
-**Make sure your .env file includes the following keys:**
+◆ **Make sure your .env file includes the following keys:**
 ```bash
 DATABASE_URL="your_postgres_connection_string"
 NEXTAUTH_URL="http://localhost:3000"
