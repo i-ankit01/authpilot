@@ -4,7 +4,7 @@ A modern CLI tool to bootstrap authentication into your Next.js applications —
 
 AuthPilot handles your Prisma setup, NextAuth configuration, environment variables, and even dashboard scaffolding — all with a single command.
 
-[![npm version](https://badge.fury.io/js/next-theme-toggle.svg)](https://badge.fury.io/js/next-theme-toggle)
+[![npm version](https://badge.fury.io/js/authpilot.svg)](https://badge.fury.io/js/authpilot)
 
 ## Features
 

@@ -28,7 +28,7 @@ if (command === "init") {
   function cancelFunction(value) {
     if (!value) {
       outro(chalk.yellow(`${figures.warning} Installation cancelled.`));
-      process.exit(0);
+      process.exit(1);
     }
   }
 
@@ -46,7 +46,12 @@ if (command === "init") {
   async function overrideSchema(dbType) {
     const schemaPath = path.join(process.cwd(), "prisma", "schema.prisma");
 
-    const templatePath = path.join(__dirname, "templates", "schemas", `${dbType}.prisma`);
+    const templatePath = path.join(
+      __dirname,
+      "templates",
+      "schemas",
+      `${dbType}.prisma`
+    );
 
     const templateContent = await fs.readFile(templatePath, "utf-8");
     await fs.writeFile(schemaPath, templateContent);
@@ -59,7 +64,12 @@ if (command === "init") {
 
     await fs.mkdir(libPath, { recursive: true });
 
-    const templatePath = path.join(__dirname, "templates", "schemas", "dbTemplate.ts");
+    const templatePath = path.join(
+      __dirname,
+      "templates",
+      "schemas",
+      "dbTemplate.ts"
+    );
     const templateContent = await fs.readFile(templatePath, "utf-8");
     const targetPath = path.join(libPath, "db.ts");
     await fs.writeFile(targetPath, templateContent, "utf-8");
@@ -180,7 +190,12 @@ export default {
       ? path.join(process.cwd(), "src", "auth.ts")
       : path.join(process.cwd(), "auth.ts");
 
-    const templatePath = path.join(__dirname, "templates", "auth",  "authTemplate.ts");
+    const templatePath = path.join(
+      __dirname,
+      "templates",
+      "auth",
+      "authTemplate.ts"
+    );
     const templateContent = await fs.readFile(templatePath, "utf-8");
     await fs.writeFile(authFilePath, templateContent, "utf-8");
   }
@@ -321,7 +336,10 @@ export default {
       ],
     });
 
-    cancelFunction(dbType);
+    if (isCancel(dbType)) {
+      outro(chalk.yellow(`${figures.warning} Installation cancelled.`));
+      process.exit(1);
+    }
 
     const providers = await multiselect({
       message:
@@ -339,6 +357,11 @@ export default {
       ],
       required: false,
     });
+
+    if (isCancel(providers)) {
+      outro(chalk.yellow(`${figures.warning} Installation cancelled.`));
+      process.exit(1);
+    }
 
     const s = spinner();
     try {
