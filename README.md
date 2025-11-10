@@ -42,7 +42,17 @@ AuthPilot automatically installs and configures the following core dependencies 
 
 **In the root of you Next.js project execute this**
 ```bash
+# Using npm
 npx authpilot init
+
+# Using pnpm
+pnpm dlx authpilot init
+
+# Using yarn
+yarn dlx authpilot init
+
+# Using bun
+bunx authpilot init
 ```
 
 **Pick Your Database :**
@@ -144,3 +154,14 @@ You can now start your development server:
 ```bash
 npm run dev
 ```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Built By
+
+- Twitter: [@ankit_codes_](https://x.com/ankit_codes_)
+- GitHub: [@i-ankit01](https://github.com/i-ankit01)
+
+_Keep Building !!_

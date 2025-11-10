@@ -46,7 +46,7 @@ if (command === "init") {
   async function overrideSchema(dbType) {
     const schemaPath = path.join(process.cwd(), "prisma", "schema.prisma");
 
-    const templatePath = path.join(__dirname, "templates", `${dbType}.prisma`);
+    const templatePath = path.join(__dirname, "templates", "schemas", `${dbType}.prisma`);
 
     const templateContent = await fs.readFile(templatePath, "utf-8");
     await fs.writeFile(schemaPath, templateContent);
@@ -59,7 +59,7 @@ if (command === "init") {
 
     await fs.mkdir(libPath, { recursive: true });
 
-    const templatePath = path.join(__dirname, "templates", "dbTemplate.ts");
+    const templatePath = path.join(__dirname, "templates", "schemas", "dbTemplate.ts");
     const templateContent = await fs.readFile(templatePath, "utf-8");
     const targetPath = path.join(libPath, "db.ts");
     await fs.writeFile(targetPath, templateContent, "utf-8");
@@ -98,6 +98,7 @@ if (command === "init") {
     const templatePath = path.join(
       __dirname,
       "templates",
+      "schemas",
       "prismaConfigTemplate.ts"
     );
 
@@ -166,6 +167,7 @@ export default {
     const templatePath = path.join(
       __dirname,
       "templates",
+      "auth",
       "authActionsTemplate.ts"
     );
     const templateContent = await fs.readFile(templatePath, "utf-8");
@@ -178,7 +180,7 @@ export default {
       ? path.join(process.cwd(), "src", "auth.ts")
       : path.join(process.cwd(), "auth.ts");
 
-    const templatePath = path.join(__dirname, "templates", "authTemplate.ts");
+    const templatePath = path.join(__dirname, "templates", "auth",  "authTemplate.ts");
     const templateContent = await fs.readFile(templatePath, "utf-8");
     await fs.writeFile(authFilePath, templateContent, "utf-8");
   }
@@ -193,6 +195,7 @@ export default {
     const templatePath = path.join(
       __dirname,
       "templates",
+      "auth",
       "authRouteTemplate.ts"
     );
     const templateContent = await fs.readFile(templatePath, "utf-8");
@@ -208,6 +211,7 @@ export default {
     const templatePath = path.join(
       __dirname,
       "templates",
+      "auth",
       "middlewareTemplate.ts"
     );
     const templateContent = await fs.readFile(templatePath, "utf-8");
@@ -248,6 +252,7 @@ export default {
     const templatePath = path.join(
       __dirname,
       "templates",
+      "auth",
       "useCurrentUserHookTemplate.ts"
     );
     const templateContent = await fs.readFile(templatePath, "utf-8");
@@ -263,6 +268,7 @@ export default {
     const templatePath = path.join(
       __dirname,
       "templates",
+      "ui",
       "rootLayoutTemplate.tsx"
     );
 
@@ -278,6 +284,7 @@ export default {
     const templatePath = path.join(
       __dirname,
       "templates",
+      "ui",
       "landingPageTemplate.tsx"
     );
 
@@ -295,6 +302,7 @@ export default {
     const templatePath = path.join(
       __dirname,
       "templates",
+      "ui",
       "dashboardTemplate.tsx"
     );
     const templateContent = await fs.readFile(templatePath, "utf-8");
