@@ -506,22 +506,47 @@ export default {
       process.exit(1);
     }
 
-    try {
-      s.start("Updating layout.tsx !");
-      await updateRootLayout(srcExists);
-      s.stop(
-        chalk.green(`${figures.tick} Updated layout.tsx with SessionProvider !`)
-      );
-    } catch (error) {
-      s.stop(chalk.red(`${figures.cross} Update failed.`));
-      outro(chalk.red(error.message));
-      process.exit(1);
+    const confirmRootOverwrite = await confirm({
+      message: "Do you want to overwrite your root page.tsx and layout.tsx?",
+      initialValue: true,
+    });
+
+    cancelFunction(confirmRootOverwrite);
+
+    if (confirmRootOverwrite) {
+      try {
+        s.start("Updating layout.tsx and page.tsx!");
+        await updateRootLayout(srcExists);
+        await createUserHook(srcExists);
+        await updateRootPage(srcExists);
+        s.stop(
+          chalk.green(
+            `${figures.tick} Updated layout.tsx with SessionProvider !`
+          )
+        );
+      } catch (error) {
+        s.stop(chalk.red(`${figures.cross} Update failed.`));
+        outro(chalk.red(error.message));
+        process.exit(1);
+      }
+    } else {
+      try {
+        s.start("Creating User Guide");
+        await createUserGuide(srcExists);
+        s.stop(
+          chalk.yellow(
+            `${figures.tick} Created userGuide.md please go through the steps !`
+          )
+        );
+      } catch (error) {
+        s.stop(chalk.red(`${figures.cross} creation failed.`));
+        outro(chalk.red(error.message));
+        process.exit(1);
+      }
     }
 
     try {
       s.start("Creating Dashboard & Current User Hook!");
-      await createUserHook(srcExists);
-      await updateRootPage(srcExists);
       await createDashboardPage(srcExists);
       s.stop(
         chalk.green(`${figures.tick} Created Dashboard & Current User Hook !`)
