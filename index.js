@@ -325,6 +325,21 @@ export default {
     await fs.writeFile(targetPath, templateContent, "utf-8");
   }
 
+  async function createUserGuide(srcExists) {
+    const guidePath = srcExists
+      ? path.join(process.cwd(), "src", "userGuide.md")
+      : path.join(process.cwd(), "userGuide.md");
+
+    const templatePath = path.join(
+      __dirname,
+      "templates",
+      "ui",
+      "userGuide.md"
+    );
+    const templateContent = await fs.readFile(templatePath, "utf-8");
+    await fs.writeFile(guidePath, templateContent, "utf-8");
+  }
+
   async function main() {
     intro(chalk.cyan(`${figures.play} AuthPilot CLI`));
 
@@ -510,8 +525,6 @@ export default {
       message: "Do you want to overwrite your root page.tsx and layout.tsx?",
       initialValue: true,
     });
-
-    cancelFunction(confirmRootOverwrite);
 
     if (confirmRootOverwrite) {
       try {
