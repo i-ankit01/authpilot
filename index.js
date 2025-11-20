@@ -381,7 +381,7 @@ export default {
     const s = spinner();
     try {
       s.start("Initialzing Prisma...");
-      await execAsync("npm install prisma --save-dev @prisma/client");
+      await execAsync("npm install prisma@6.16.0 @prisma/client@6.16.0 --save-dev");
       await execAsync("npx prisma init");
 
       await createPrismaInstance(srcExists);
