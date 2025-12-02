@@ -10,7 +10,7 @@ import {
   isCancel,
   cancel,
 } from "@clack/prompts";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { promises as fs } from "fs";
 import { promisify } from "util";
 import chalk from "chalk";
@@ -30,6 +30,21 @@ if (command === "init") {
       outro(chalk.yellow(`${figures.warning} Installation cancelled.`));
       process.exit(1);
     }
+  }
+
+  function run(command, args) {
+    return new Promise((resolve, reject) => {
+      const child = spawn(command, args, {
+        stdio: "inherit",
+        shell: true,
+        env: process.env,
+      });
+
+      child.on("exit", (code) => {
+        if (code === 0) resolve();
+        else reject(new Error(`${command} ${args.join(" ")} failed`));
+      });
+    });
   }
 
   async function hasSrcDirectory() {
@@ -381,7 +396,9 @@ export default {
     const s = spinner();
     try {
       s.start("Initialzing Prisma...");
-      await execAsync("npm install prisma@6.16.0 @prisma/client@6.16.0 --save-dev");
+      await execAsync(
+        "npm install prisma @prisma/client --save-dev dotenv"
+      );
       await execAsync("npx prisma init");
 
       await createPrismaInstance(srcExists);
@@ -413,7 +430,7 @@ export default {
       const databaseUrl = await askForDatabaseUrl();
       await writeDatabaseUrlInEnv(databaseUrl);
       await updateEnvFile(providers, databaseUrl);
-      await updatePrismaConfigFile();
+      // await updatePrismaConfigFile();
       console.log(
         chalk.green(`${figures.tick} Updated .env with DATABASE_URL!`)
       );
@@ -434,8 +451,7 @@ export default {
         const wantReset = await resetDb();
         if (wantReset) {
           s.start("Resetting database");
-          await execAsync("npx prisma migrate reset --force");
-          await execAsync("npx prisma migrate dev --name init");
+          await execAsync("npx prisma db push --force-reset");
           await execAsync("npx prisma generate");
           s.stop(chalk.green(`${figures.tick} Generated prisma client!`));
         } else {
