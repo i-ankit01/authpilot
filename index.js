@@ -394,50 +394,50 @@ export default {
     }
 
     const s = spinner();
-    // try {
-    //   s.start("Initialzing Prisma...");
-    //   await execAsync(
-    //     "npm install prisma @prisma/client --save-dev dotenv"
-    //   );
-    //   await execAsync("npx prisma init");
+    try {
+      s.start("Initialzing Prisma...");
+      await execAsync(
+        "npm install prisma @prisma/client --save-dev dotenv"
+      );
+      await execAsync("npx prisma init");
 
-    //   await createPrismaInstance(srcExists);
+      await createPrismaInstance(srcExists);
 
-    //   s.stop(chalk.green(`${figures.tick} Prisma initialized successfully!`));
-    // } catch (error) {
-    //   s.stop(chalk.red(`${figures.cross} Installation failed.`));
-    //   outro(chalk.red(error.message));
-    // }
+      s.stop(chalk.green(`${figures.tick} Prisma initialized successfully!`));
+    } catch (error) {
+      s.stop(chalk.red(`${figures.cross} Installation failed.`));
+      outro(chalk.red(error.message));
+    }
 
-    // const confirmOverwrite = await confirm({
-    //   message: "Do you want to overwrite your schema.prisma file?",
-    //   initialValue: true,
-    // });
+    const confirmOverwrite = await confirm({
+      message: "Do you want to overwrite your schema.prisma file?",
+      initialValue: true,
+    });
 
-    // cancelFunction(confirmOverwrite);
+    cancelFunction(confirmOverwrite);
 
-    // try {
-    //   s.start("Updating schema.prisma");
-    //   await overrideSchema(dbType);
-    //   s.stop(chalk.green(`${figures.tick} Updated schema.prisma!`));
-    // } catch (error) {
-    //   s.stop(chalk.red(`${figures.cross} Update failed.`));
-    //   outro(chalk.red(error.message));
-    //   process.exit(1);
-    // }
+    try {
+      s.start("Updating schema.prisma");
+      await overrideSchema(dbType);
+      s.stop(chalk.green(`${figures.tick} Updated schema.prisma!`));
+    } catch (error) {
+      s.stop(chalk.red(`${figures.cross} Update failed.`));
+      outro(chalk.red(error.message));
+      process.exit(1);
+    }
 
-    // try {
-    //   const databaseUrl = await askForDatabaseUrl();
-    //   await writeDatabaseUrlInEnv(databaseUrl);
-    //   await updateEnvFile(providers, databaseUrl);
-    //   // await updatePrismaConfigFile();
-    //   console.log(
-    //     chalk.green(`${figures.tick} Updated .env with DATABASE_URL!`)
-    //   );
-    // } catch (error) {
-    //   outro(chalk.red(error.message));
-    //   process.exit(1);
-    // }
+    try {
+      const databaseUrl = await askForDatabaseUrl();
+      await writeDatabaseUrlInEnv(databaseUrl);
+      await updateEnvFile(providers, databaseUrl);
+      // await updatePrismaConfigFile();
+      console.log(
+        chalk.green(`${figures.tick} Updated .env with DATABASE_URL!`)
+      );
+    } catch (error) {
+      outro(chalk.red(error.message));
+      process.exit(1);
+    }
 
     if (dbType == "postgresql") {
       try {
